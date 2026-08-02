@@ -1,0 +1,99 @@
+# ─────────────────────────────────────────────
+# CPG COLLECTIONS WORKFLOW - BUSINESS RULES
+# ─────────────────────────────────────────────
+
+timing:
+  pre_due_reminder_days: 5
+  first_overdue_reminder_days: 3
+  follow_up_interval_days: 4
+  escalation_threshold_days: 14
+  credit_hold_threshold_days: 30
+  ptp_reminder_before_days: 1
+  ptp_grace_period_days: 1
+
+segments:
+  strategic:
+    timing_multiplier: 2.0
+    tone: soft
+    escalation_path: [relationship_manager, sales_vp, credit_team]
+    pre_due_reminder: false
+    requires_approval_for_credit_hold: true
+
+  mid_tier:
+    timing_multiplier: 1.0
+    tone: moderate
+    escalation_path: [collections_manager, credit_team, legal]
+    pre_due_reminder: true
+    requires_approval_for_credit_hold: false
+
+  small:
+    timing_multiplier: 0.8
+    tone: firm
+    escalation_path: [collections_manager, credit_team, legal]
+    pre_due_reminder: true
+    requires_approval_for_credit_hold: false
+
+credit:
+  alert_threshold_percent: 80
+  hold_threshold_percent: 95
+  auto_hold_threshold_percent: 100
+
+promise_to_pay:
+  max_ptp_extensions: 2
+  broken_ptp_escalate_immediately: true
+  confidence_reduction_per_broken: 20
+
+escalation:
+  max_emails_before_call: 2
+  max_calls_before_manager: 2
+  manager_escalation_days: 14
+  legal_escalation_days: 45
+
+dispute_routing:
+  pricing_dispute: dispute_team
+  quantity_dispute: dispute_team
+  quality_dispute: dispute_team
+  delivery_dispute: operations_team
+  trade_deduction: trade_team
+  promotional_allowance: trade_team
+  damage_claim: operations_team
+  duplicate_invoice: finance_team
+
+document_rules:
+  first_reminder: [invoice_pdf]
+  delivery_dispute: [pod, invoice_pdf]
+  payment_discrepancy: [remittance, invoice_pdf]
+  multiple_overdue: [statement]
+  trade_deduction: [promo_agreement, invoice_pdf]
+
+tone:
+  soft:
+    description: "Relationship-first. No pressure language. Offer help."
+    use_when: "Strategic accounts, first contact, good payment history"
+  moderate:
+    description: "Professional but clear. State expectations. Reference terms."
+    use_when: "Standard accounts, second contact, minor delays"
+  firm:
+    description: "Direct. Reference consequences. Set deadlines."
+    use_when: "Repeated non-response, broken PTP, small accounts overdue >14 days"
+  aggressive:
+    description: "Formal demand. Reference credit impact. Legal mention."
+    use_when: "Final stage before legal/credit hold. Never for strategic accounts."
+
+seasonal:
+  enabled: true
+  patterns:
+    summer_slowdown:
+      months: [6, 7, 8]
+      timing_multiplier: 1.5
+      applies_to: [small]
+    q4_rush:
+      months: [10, 11, 12]
+      timing_multiplier: 0.7
+      applies_to: [small, mid_tier]
+
+hierarchy:
+  parent_risk_affects_children: true
+  sibling_dispute_awareness: true
+  credit_limit_at_parent_level: true
+  escalation_rolls_up_to_parent: true
